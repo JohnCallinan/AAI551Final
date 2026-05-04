@@ -53,3 +53,26 @@ def test_queue_empty_raises():
        that the custom error is called '''
     with pytest.raises(QueueError):
         ERQueue().next_patient()
+
+# Generator tests
+def test_generator_invalid_shift():
+    '''Checks that a negative shift length raises an error'''
+    with pytest.raises(ValueError):
+        list(generate_patients(shift_minutes=-1))
+
+#sim integration tests
+def test_wait_times_are_nonnegative_and_finite():
+    '''Runs a test that by ruuning full sim to see that no patient should have a negative or super long wait time'''
+    patients = list(generate_patients(shift_minutes=480, seed=99))
+    results = run_simulation(patients, num_doctors=2, seed=99)
+    for p in results:
+        assert p.wait_time is not None #every patient should be treated
+        assert p.wait_time >= 0 # no negative wait time
+        assert p.wait_time < 24 * 60 #no over 24 hour wait time
+
+
+def test_simulation_treats_all_patients():
+    '''Runs a short shift to quickly check arrivals is the same as number of treated patients'''
+    patients = list(generate_patients(shift_minutes=240, seed=3))
+    results = run_simulation(patients, num_doctors=2, seed=3)
+    assert len(results) == len(patients)
